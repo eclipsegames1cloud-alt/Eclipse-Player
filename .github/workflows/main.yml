@@ -1,37 +1,14 @@
-name: Build Eclipse Player APK
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --release
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Eclipse-Player-Release
-          path: build/app/outputs/flutter-apk/app-release.apk
+- name: Build APK
+        run: |
+          if [ -f "lib/main.dart" ]; then
+            flutter build apk --release
+          else
+            echo "Searching for main file..."
+            MAIN_FILE=$(find lib -name "*.dart" | xargs grep -l "void main" | head -n 1)
+            if [ -z "$MAIN_FILE" ]; then
+              echo "Error: Could not find a file with void main() in lib/"
+              exit 1
+            fi
+            echo "Found main file at: $MAIN_FILE"
+            flutter build apk --release -t $MAIN_FILE
+          fi
